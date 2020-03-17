@@ -32,7 +32,7 @@ __author__ = "Edwin Dalmaijer"
 import os
 # external
 import numpy
-import matplotlib
+import matplotlib 
 from matplotlib import pyplot, image
 
 
@@ -126,9 +126,11 @@ def draw_fixations(fixations, dispsize, imagefile=None, durationsize=True, durat
 	# CIRCLES
 	# duration weigths
 	if durationsize:
-		siz = 1 * (fix['dur']/30.0)
+        #TEJADA: duration were not more divided by 30
+		siz = 100 * (fix['dur']/10.0)
 	else:
-		siz = 1 * numpy.median(fix['dur']/30.0)
+		#TEJADA: duration were not more divided by 30
+		siz = 100 * numpy.median(fix['dur']/10.0)
 	if durationcolour:
 		col = fix['dur']
 	else:
@@ -142,7 +144,10 @@ def draw_fixations(fixations, dispsize, imagefile=None, durationsize=True, durat
 	# save the figure if a file name was provided
 	if savefilename != None:
 		fig.savefig(savefilename)
-	
+		fig.clf() #TEJADA: Close the matplotlib object after save
+		pyplot.close() #TEJADA: Close the matplotlib object after save
+		
+		
 	return fig
 
 
@@ -200,9 +205,8 @@ def draw_heatmap(fixations, dispsize, imagefile=None, durationweight=True, alpha
 	# create heatmap
 	for i in range(0,len(fix['dur'])):
 		# get x and y coordinates
-		#x and y - indexes of heatmap array. must be integers
-		x = strt + int(fix['x'][i]) - int(gwh/2)
-		y = strt + int(fix['y'][i]) - int(gwh/2)
+		x = strt + fix['x'][i] - int(gwh/2)
+		y = strt + fix['y'][i] - int(gwh/2)
 		# correct Gaussian size if either coordinate falls outside of
 		# display boundaries
 		if (not 0 < x < dispsize[0]) or (not 0 < y < dispsize[1]):
@@ -225,7 +229,11 @@ def draw_heatmap(fixations, dispsize, imagefile=None, durationweight=True, alpha
 				pass
 		else:				
 			# add Gaussian to the current heatmap
+			#Convert x and y coodernates into integers (Julian Tejada)
+			x = int(x)
+			y = int(y)
 			heatmap[y:y+gwh,x:x+gwh] += gaus * fix['dur'][i]
+			
 	# resize heatmap
 	heatmap = heatmap[strt:dispsize[1]+strt,strt:dispsize[0]+strt]
 	# remove zeros
@@ -240,11 +248,13 @@ def draw_heatmap(fixations, dispsize, imagefile=None, durationweight=True, alpha
 	# save the figure if a file name was provided
 	if savefilename != None:
 		fig.savefig(savefilename)
-	
+		fig.clf() #TEJADA: Close the matplotlib object after save to clear matplotlib cache
+		pyplot.close() #TEJADA: Close the matplotlib object after save to clear matplotlib cache
+		
 	return fig
 
 
-def draw_raw(x, y, dispsize, imagefile=None, savefilename=None):
+def draw_raw(x, y, s, dispsize, imagefile=None, savefilename=None):
 	
 	"""Draws the raw x and y data
 	
@@ -274,18 +284,36 @@ def draw_raw(x, y, dispsize, imagefile=None, savefilename=None):
 	"""
 	
 	# image
+	#print(imagefile)
 	fig, ax = draw_display(dispsize, imagefile=imagefile)
 
 	# plot raw data points
-	ax.plot(x, y, 'o', color=COLS['aluminium'][0], markeredgecolor=COLS['aluminium'][5])
+	ax.plot(x, y, 'o', color=COLS['aluminium'][0], markeredgecolor=COLS['aluminium'][5], markersize=0.5)
+	meanPupile = numpy.mean(s)
+	stdPupile = numpy.std(s)
+	maxPupile = numpy.amax(s)
+	minPupile = numpy.amin(s)
+	
+	
+	print ("Pupile size mean: %s" % str(meanPupile))
+	print ("Pupile size std: %s" % str(stdPupile))
+	for i, txt in enumerate(s):        
+		txt = round(txt, 1)
+		if txt > maxPupile - 1: # meanPupile + (stdPupile/2):
+			ax.annotate(txt, (x[i],y[i]), color='r', fontsize=10)
+		if txt < minPupile + 1: # meanPupile - (stdPupile*0):
+			ax.annotate(txt, (x[i],y[i]), color='g', fontsize=10)
 
-	# invert the y axis, as (0,0) is top left on a display
+    # invert the y axis, as (0,0) is top left on a display
 	ax.invert_yaxis()
 	# save the figure if a file name was provided
 	if savefilename != None:
 		fig.savefig(savefilename)
+		fig.clf() #TEJADA: Close the matplotlib object after save to clear matplotlib cache
 	
 	return fig
+
+
 
 
 def draw_scanpath(fixations, saccades, dispsize, imagefile=None, alpha=0.5, savefilename=None):
@@ -329,8 +357,11 @@ def draw_scanpath(fixations, saccades, dispsize, imagefile=None, alpha=0.5, save
 	# FIXATIONS
 	# parse fixations
 	fix = parse_fixations(fixations)
-	# draw fixations
-	ax.scatter(fix['x'],fix['y'], s=(1 * fix['dur'] / 30.0), c=COLS['chameleon'][2], marker='o', cmap='jet', alpha=alpha, edgecolors='none')
+	# draw fixations | TEJADA: size multiply by 10
+	ax.scatter(fix['x'],fix['y'], s=fix['dur']*10, c=COLS['chameleon'][2], marker='o', cmap='jet', alpha=alpha, edgecolors='none')
+	# draw number on fixation
+	# TEJADA: comment line 357 (python error when try to draw the total number of fixation
+	#ax.text(fix['x'],fix['y'],"num(s=fix['dur'])")
 	# draw annotations (fixation numbers)
 	for i in range(len(fixations)):
 		ax.annotate(str(i+1), (fix['x'][i],fix['y'][i]), color=COLS['aluminium'][5], alpha=1, horizontalalignment='center', verticalalignment='center', multialignment='center')
@@ -339,14 +370,26 @@ def draw_scanpath(fixations, saccades, dispsize, imagefile=None, alpha=0.5, save
 	if saccades:
 		# loop through all saccades
 		for st, et, dur, sx, sy, ex, ey in saccades:
+			#TEJADA: jump (maybe) blinks (0,0)
+			if sx==0 and sy==0:
+				continue
+			if ex==0 and ey==0:
+				continue            
 			# draw an arrow between every saccade start and ending
+			sx = int(sx)
+			sy = int(sy)
+			ex = int(ex)
+			ey = int(ey)
+			
 			ax.arrow(sx, sy, ex-sx, ey-sy, alpha=alpha, fc=COLS['aluminium'][0], ec=COLS['aluminium'][5], fill=True, shape='full', width=10, head_width=20, head_starts_at_zero=False, overhang=0)
 
 	# invert the y axis, as (0,0) is top left on a display
 	ax.invert_yaxis()
-	# save the figure if a file name was provided
+	## save the figure if a file name was provided
 	if savefilename != None:
 		fig.savefig(savefilename)
+		fig.clf() #TEJADA: Close the matplotlib object after save to clear matplotlib cache
+		pyplot.close() #TEJADA: Close the matplotlib object after save to clear matplotlib cache
 	
 	return fig
 
@@ -381,10 +424,9 @@ def draw_display(dispsize, imagefile=None):
 	"""
 	
 	# construct screen (black background)
-	_, ext = os.path.splitext(imagefile)
-	ext = ext.lower()
-	data_type = 'float32' if ext == '.png' else 'uint8'
-	screen = numpy.zeros((dispsize[1],dispsize[0],3), dtype=data_type)
+	#screen = numpy.zeros((dispsize[1],dispsize[0],3), dtype='uint8')
+	# TEJADA: Alteration from uint8 to float32
+	screen = numpy.zeros((dispsize[1],dispsize[0],3), dtype='float32')
 	# if an image location has been passed, draw the image
 	if imagefile != None:
 		# check if the path to the image exists
@@ -395,8 +437,8 @@ def draw_display(dispsize, imagefile=None):
 		# flip image over the horizontal axis
 		# (do not do so on Windows, as the image appears to be loaded with
 		# the correct side up there; what's up with that? :/)
-		if not os.name == 'nt':
-			img = numpy.flipud(img)
+		#if not os.name == 'nt':
+			#img = numpy.flipud(img)
 		# width and height of the image
 		w, h = len(img[0]), len(img)
 		# x and y position of the image on the display
