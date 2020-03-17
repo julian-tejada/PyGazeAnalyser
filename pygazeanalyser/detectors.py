@@ -98,16 +98,8 @@ def blink_detection(x, y, time, missing=0.0, minlen=10):
 	
 	return Sblk, Eblk
 
-def remove_missing(x, y, time, missing):
-	mx = numpy.array(x==missing, dtype=int)
-	my = numpy.array(y==missing, dtype=int)
-	x = x[(mx+my) != 2]
-	y = y[(mx+my) != 2]
-	time = time[(mx+my) != 2]
-	return x, y, time
 
-
-def fixation_detection(x, y, time, missing=0.0, maxdist=25, mindur=50):
+def fixation_detection(x, y, time, missing=0.0, maxdist=25, mindur=100):
 	
 	"""Detects fixations, defined as consecutive samples with an inter-sample
 	distance of less than a set amount of pixels (disregarding missing data)
@@ -131,9 +123,7 @@ def fixation_detection(x, y, time, missing=0.0, maxdist=25, mindur=50):
 				Sfix	-	list of lists, each containing [starttime]
 				Efix	-	list of lists, each containing [starttime, endtime, duration, endx, endy]
 	"""
-
-	x, y, time = remove_missing(x, y, time, missing)
-
+	
 	# empty list to contain data
 	Sfix = []
 	Efix = []
@@ -142,12 +132,12 @@ def fixation_detection(x, y, time, missing=0.0, maxdist=25, mindur=50):
 	si = 0
 	fixstart = False
 	for i in range(1,len(x)):
+		#TEJADA: jump blinks (0,0)
+		if x[i]<=0 or y[i]<=0:
+			continue
 		# calculate Euclidean distance from the current fixation coordinate
 		# to the next coordinate
-		squared_distance = ((x[si]-x[i])**2 + (y[si]-y[i])**2)
-		dist = 0.0
-		if squared_distance > 0:
-			dist = squared_distance**0.5
+		dist = ((x[si]-x[i])**2 + (y[si]-y[i])**2)**0.5
 		# check if the next coordinate is below maximal distance
 		if dist <= maxdist and not fixstart:
 			# start a new fixation
@@ -166,9 +156,7 @@ def fixation_detection(x, y, time, missing=0.0, maxdist=25, mindur=50):
 			si = 0 + i
 		elif not fixstart:
 			si += 1
-	#add last fixation end (we can lose it if dist > maxdist is false for the last point)
-	if len(Sfix) > len(Efix):
-		Efix.append([Sfix[-1][0], time[len(x)-1], time[len(x)-1]-Sfix[-1][0], x[si], y[si]])
+	
 	return Sfix, Efix
 
 
@@ -198,8 +186,7 @@ def saccade_detection(x, y, time, missing=0.0, minlen=5, maxvel=40, maxacc=340):
 			Ssac	-	list of lists, each containing [starttime]
 			Esac	-	list of lists, each containing [starttime, endtime, duration, startx, starty, endx, endy]
 	"""
-	x, y, time = remove_missing(x, y, time, missing)
-
+	
 	# CONTAINERS
 	Ssac = []
 	Esac = []
