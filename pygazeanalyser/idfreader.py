@@ -43,7 +43,7 @@ import os.path
 
 import numpy
 
-from detectors import blink_detection, fixation_detection, saccade_detection
+from pygazeanalyser.detectors import blink_detection, fixation_detection, saccade_detection
 
 
 def read_idf(filename, start, stop=None, missing=0.0, debug=False):
@@ -195,9 +195,9 @@ def read_idf(filename, start, stop=None, missing=0.0, debug=False):
 				trial['trackertime'] = numpy.array(trackertime)
 				trial['events'] = copy.deepcopy(events)
 				# events
-				trial['events']['Sblk'], trial['events']['Eblk'] = blink_detection(trial['x'],trial['y'],trial['trackertime'],missing=missing)
-				trial['events']['Sfix'], trial['events']['Efix'] = fixation_detection(trial['x'],trial['y'],trial['trackertime'],missing=missing)
-				trial['events']['Ssac'], trial['events']['Esac'] = saccade_detection(trial['x'],trial['y'],trial['trackertime'],missing=missing)
+				trial['events']['Sblk'], trial['events']['Eblk'] = blink_detection(trial['x'],trial['y'],trial['trackertime'],missing=missing, minlen=5) # TEJADA: decreased from 10 to 5
+				trial['events']['Sfix'], trial['events']['Efix'] = fixation_detection(trial['x'],trial['y'],trial['trackertime'],missing=missing,maxdist=80, mindur=80) # Parametros ajustados para BeGaze
+				trial['events']['Ssac'], trial['events']['Esac'] = saccade_detection(trial['x'],trial['y'],trial['trackertime'],missing=missing, minlen=1, maxvel=60, maxacc=450) #TEJADA: still trying to obtain the best adjust
 				# add trial to data
 				data.append(trial)
 				# reset stuff
@@ -261,8 +261,9 @@ def read_idf(filename, start, stop=None, missing=0.0, debug=False):
 								val = (float(line[vi['L']]) + float(line[vi['R']])) / 2.0
 						v.append(val)
 					# extract time data
-					time.append(int(line[timei])-starttime)
-					trackertime.append(int(line[timei]))
+					time.append((int(line[timei])-starttime))
+					# TEJADA: tracker time was divided by 1000 to adjust timestamp of SMI
+					trackertime.append((int(line[timei])-starttime)/1000)
 				except:
 					message("line '%s' could not be parsed" % line)
 					continue # skip this line	
