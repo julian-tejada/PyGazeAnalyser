@@ -127,6 +127,8 @@ out = csv.writer(open(os.path.join(DATADIR, '%s.aoi.analisis.txt' % ppname),"a")
 out.writerow(["Sujeto","Imagen","Area","Ensayo","FF_AOI","DF_AOI","LF_AOI","FE_AOI0","DE_AOI0","LE_AOI0", "Dwell_AOI"])
 AOI_Fixations = pd.DataFrame(np.zeros(((len(edfdata)), 5)), columns=['area','trial', 'starttime_mean','duration','frequency'])
 AOI_DwellTime = pd.DataFrame(np.zeros(((len(edfdata)), 3)), columns=['area','trial','frequency'])
+out.writerow(["Sujeto","Imagen","Area","Ensayo","FF_AOI","DF_AOI","LF_AOI","FE_AOI0","DE_AOI0","LE_AOI0"])
+AOI_Fixations = pd.DataFrame(np.zeros(((len(edfdata)), 5)), columns=['area','trial', 'starttime_mean','duration','frequency'])
 AOI_SaccadesEntries = pd.DataFrame(np.zeros(((len(edfdata)), 5)), columns=['area','trial','latency','frequency', 'duration'])
 
 	# loop through trials
@@ -142,6 +144,7 @@ for trialnr in range(len(edfdata)):
 	dwell_x = edfdata[trialnr]['x']
 	dwell_y = edfdata[trialnr]['y']
 	
+
     ### AOI - Fixations- start detection
 	# create a dataframe with all fixations
 	fixations_df = pd.DataFrame(fixations, columns=['starttime', 'endtime', 'duration', 'endx', 'endy'])
@@ -152,6 +155,7 @@ for trialnr in range(len(edfdata)):
     # Remove blinks
 	dwell_df = dwell_df.drop(dwell_df[(dwell_df.x <= 0) & (dwell_df.y <= 0)].index)
     
+
     
 	for  area in range(len(df)):
 	   	print("area '%i'" % area)
@@ -177,6 +181,7 @@ for trialnr in range(len(edfdata)):
 	   	AOI_SaccadesEntries['duration'][area] =  Temp_sac_ent['duration'].sum()
 	   	AOI_SaccadesEntries['frequency'][area] =  len(Temp_sac_ent['duration'])
 	   	out.writerow([str(sys.argv[1]),imgname[trialnr], area, trialnr, AOI_Fixations['frequency'][area],AOI_Fixations['duration'][area], AOI_Fixations['starttime_mean'][area], AOI_SaccadesEntries['frequency'][area], AOI_SaccadesEntries['duration'][area], AOI_SaccadesEntries['latency'][area], AOI_DwellTime['frequency'][area]])
+	   	out.writerow([str(sys.argv[1]),imgname[trialnr], area, trialnr, AOI_Fixations['frequency'][area],AOI_Fixations['duration'][area], AOI_Fixations['starttime_mean'][area], AOI_SaccadesEntries['frequency'][area], AOI_SaccadesEntries['duration'][area], AOI_SaccadesEntries['latency'][area]])
 	   	print("Escrita area '%i'" % area)
         
 print('end')
