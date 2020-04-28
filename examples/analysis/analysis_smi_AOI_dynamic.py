@@ -89,7 +89,7 @@ ppname = str(sys.argv[1])
 	# BEHAVIOUR
 print("loading behavioural data")
 #df = pd.read_csv(os.path.join(DATADIR, 'BC_Avila_6.aoi.txt'))	
-df = pd.read_csv(os.path.join(DATADIR, '%s.aoi.txt' % ppname))	
+df = pd.read_csv(os.path.join(DATADIR, 'aoi.txt' ))	
 	# path
 fp = os.path.join(DATADIR, '%s.txt' % ppname)
 	
@@ -127,7 +127,6 @@ out = csv.writer(open(os.path.join(DATADIR, '%s.aoi.analisis.txt' % ppname),"a")
 out.writerow(["Sujeto","Imagen","Area","Ensayo","FF_AOI","DF_AOI","LF_AOI","FE_AOI0","DE_AOI0","LE_AOI0", "Dwell_AOI"])
 AOI_Fixations = pd.DataFrame(np.zeros(((len(edfdata)), 5)), columns=['area','trial', 'starttime_mean','duration','frequency'])
 AOI_DwellTime = pd.DataFrame(np.zeros(((len(edfdata)), 3)), columns=['area','trial','frequency'])
-out.writerow(["Sujeto","Imagen","Area","Ensayo","FF_AOI","DF_AOI","LF_AOI","FE_AOI0","DE_AOI0","LE_AOI0"])
 AOI_Fixations = pd.DataFrame(np.zeros(((len(edfdata)), 5)), columns=['area','trial', 'starttime_mean','duration','frequency'])
 AOI_SaccadesEntries = pd.DataFrame(np.zeros(((len(edfdata)), 5)), columns=['area','trial','latency','frequency', 'duration'])
 
