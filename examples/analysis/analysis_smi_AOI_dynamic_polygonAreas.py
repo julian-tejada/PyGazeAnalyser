@@ -1,21 +1,16 @@
-# analysis script for natural viewing experiment
-#
-# version 1 (1 Mar 2014)
 
 # This script estimate the frequency of fixation/saccades, their duration and latency regarding 
-# a set of AOI defined on a txt file. The txt have to have the same name that the txt file with 
-# the tracker records but with the extension aoi.txt. For instance, if the tracker file is called 
-# subject1.txt, the AOI file should called subject1.aoi.txt.
+# a set of poligonal AOI defined on a txt file. The txt have to have the name aoi.txt. 
 #
 # The aoi.txt is delimited text file that uses a comma to separate values. The first line indicate
-# the name of the columns which should include at least four columns: 
-# x0,y0,x1,y1
-# where (x0,y0) are the coordinates of the left upper corner of the rectangle that define the AOI, and
-# (x1,y1) are the coordinates of the right button corner of the same rectangle
+# the name of the columns which should include as many names as vertices has the largest n-gon defined: 
+# Corners,x0,y0,x1,y1,x2,y2,x3,y3,x4,y4,x5,y5,x6,y6.....
+# where Corners is the number of polygon vertices, xn  and yn are the coordinates (x and y) of 
+# the polygon vertices that define the AOI.
 #
-# The aoi.txt could have as many lines as AOI defined for all of the images used as stimuli, 
-# the measures of all areas will estimated recursively 
-#
+# The aoi.txt could have as many lines as polygonal AOI defined for all of the images used as stimuli, 
+# the measures of all areas will estimated recursively.
+
 # The result is a csv file with the next columns
 # "Subject","Image","Area","Trial","FF_AOI","DF_AOI","LF_AOI","FE_AOI0","DE_AOI0","LE_AOI0", "Dwell_AOI"
 # where Area is the Subject is the name of the text file with the tracker records. Image is the name of
@@ -27,7 +22,7 @@
 # the text file with the tracker records whichs correspond with the AOI.
 # 
 
-__author__ = "Edwin Dalmaijer, adapted by Julian Tejada 2019"
+__author__ = "Julian Tejada 2019 adapted from a script of Edwin Dalmaijer"
 
 # native
 import os
@@ -35,13 +30,13 @@ import csv
 import sys
 
 # custom
-#from pygazeanalyser.edfreader import read_edf
 from pygazeanalyser.idfreader import read_idf
 from pygazeanalyser.gazeplotter import draw_fixations, draw_heatmap, draw_scanpath, draw_raw
 
 # external
 import numpy as np
 import pandas as pd
+from matplotlib import path # to operate the polygonal AOIs
 
 # # # # #
 # CONSTANTS
@@ -96,10 +91,13 @@ PXPERCM = np.mean([DISPSIZE[0]/SCREENSIZE[0],DISPSIZE[1]/SCREENSIZE[1]]) # px/cm
 ppname = str(sys.argv[1])	
 #print("starting data analysis for participant '%s'" % (ppname))
 
+
 	# BEHAVIOUR
 print("loading behavioural data")
 #df = pd.read_csv(os.path.join(DATADIR, 'BC_Avila_6.aoi.txt'))	
 df = pd.read_csv(os.path.join(DATADIR, 'aoi.txt' ))	
+
+            
 	# path
 fp = os.path.join(DATADIR, '%s.txt' % ppname)
 	
@@ -134,11 +132,11 @@ print("plotting gaze data")
 # dataframe of results
 
 out = csv.writer(open(os.path.join(DATADIR, '%s.aoi.analisis.txt' % ppname),"a"), delimiter=';', quoting=csv.QUOTE_ALL)
-out.writerow(["Sujeto","Imagen","Area","Ensayo","FF_AOI","DF_AOI","LF_AOI","FE_AOI0","DE_AOI0","LE_AOI0", "Dwell_AOI"])
-AOI_Fixations = pd.DataFrame(np.zeros(((len(edfdata)), 5)), columns=['area','trial', 'starttime_mean','duration','frequency'])
-AOI_DwellTime = pd.DataFrame(np.zeros(((len(edfdata)), 3)), columns=['area','trial','frequency'])
-AOI_Fixations = pd.DataFrame(np.zeros(((len(edfdata)), 5)), columns=['area','trial', 'starttime_mean','duration','frequency'])
-AOI_SaccadesEntries = pd.DataFrame(np.zeros(((len(edfdata)), 5)), columns=['area','trial','latency','frequency', 'duration'])
+out.writerow(["Subject","Image","Area","Trial","FF_AOI","DF_AOI","LF_AOI","FE_AOI0","DE_AOI0","LE_AOI0", "Dwell_AOI"])
+AOI_Fixations = pd.DataFrame(np.zeros(((len(df)), 5)), columns=['area','trial', 'starttime_mean','duration','frequency'])
+AOI_DwellTime = pd.DataFrame(np.zeros(((len(df)), 3)), columns=['area','trial','frequency'])
+AOI_Fixations = pd.DataFrame(np.zeros(((len(df)), 5)), columns=['area','trial', 'starttime_mean','duration','frequency'])
+AOI_SaccadesEntries = pd.DataFrame(np.zeros(((len(df)), 5)), columns=['area','trial','latency','frequency', 'duration'])
 
 	# loop through trials
 for trialnr in range(len(edfdata)):
@@ -164,33 +162,72 @@ for trialnr in range(len(edfdata)):
     # Remove blinks
 	dwell_df = dwell_df.drop(dwell_df[(dwell_df.x <= 0) & (dwell_df.y <= 0)].index)
     
-
-    
-	for  area in range(len(df)):
+	
+	for area in range(0,len(df),1):
+#	for area in range(3):
 	   	print("area '%i'" % area)
-         ######  AOI - Fixations- stop
-	   	TempFix = fixations_df[(fixations_df['endx']>df['x0'][area]) & (fixations_df['endx']<=df['x1'][area]) & (fixations_df['endy']>df['y0'][area]) & (fixations_df['endy']<=df['y1'][area])]
-	   	AOI_Fixations['area'][area] =  area
-	   	AOI_Fixations['trial'][area] =  trialnr
-	   	AOI_Fixations['starttime_mean'][area] =  TempFix['starttime'].min()
-	   	AOI_Fixations['duration'][area] =  TempFix['duration'].sum()
-	   	AOI_Fixations['frequency'][area] =  len(TempFix['duration'])
+	   	Corners_x = []
+	   	Corners_y = []
+	   	for j in range(0,df.iloc[area, 0]*2,2):
+	   		Corners_x.append(df.iloc[area,j+1])
+	   		Corners_y.append(df.iloc[area,j+2])
+	   	p = path.Path(zip(Corners_x, Corners_y))
+	   	try:
+	   	    points = p.contains_points(zip(fixations_df['endx'], fixations_df['endy']))	   	
+	   	    TempFix = pd.DataFrame(fixations, columns=['starttime', 'endtime', 'duration', 'endx', 'endy'], index = points)
+	   	    TempFix = TempFix.loc[True]
+	   	        ######  AOI - Fixations- stop
+	   	    AOI_Fixations['area'][area] =  area
+	   	    AOI_Fixations['trial'][area] =  trialnr
+	   	    AOI_Fixations['starttime_mean'][area] =  TempFix['starttime'].min()
+	   	    AOI_Fixations['duration'][area] =  TempFix['duration'].sum()
+	   	    AOI_Fixations['frequency'][area] =  TempFix['duration'].size
+	   	except:  
+	   	    AOI_Fixations['area'][area] =  area
+	   	    AOI_Fixations['trial'][area] =  trialnr
+	   	    AOI_Fixations['starttime_mean'][area] =  0
+	   	    AOI_Fixations['duration'][area] =  0
+	   	    AOI_Fixations['frequency'][area] =  0
+              
+	   	            
 	   	 ######  AOI - Dwell time- stop
-	   	TempDwell = dwell_df[(dwell_df['x']>df['x0'][area]) & (dwell_df['x']<=df['x1'][area]) & (dwell_df['y']>df['y0'][area]) & (dwell_df['y']<=df['y1'][area])]
-	   	AOI_DwellTime['area'][area] =  area
-	   	AOI_DwellTime['trial'][area] =  trialnr
-	   	AOI_DwellTime['frequency'][area] =  len(TempDwell['x'])
-	   	
-	   	
+	   	try:
+	   	    points = p.contains_points(zip( dwell_df['x'],  dwell_df['y']))
+	   	    TempDwell = pd.DataFrame(dwell_df, index = points)
+
+	   	    TempDwell = TempDwell.loc[True]
+	   	    AOI_DwellTime['area'][area] =  area
+	   	    AOI_DwellTime['trial'][area] =  trialnr
+	   	    AOI_DwellTime['frequency'][area] =  TempDwell['x'].size
+	   	except:
+	   	    AOI_DwellTime['area'][area] =  area
+	   	    AOI_DwellTime['trial'][area] =  trialnr
+	   	    AOI_DwellTime['frequency'][area] =  0
+	   	           
 	   	 ######  AOI - Saccades Entries
-	   	Temp_sac_ent = saccades_df[(((saccades_df['startx']<df['x0'][area]) | (saccades_df['startx']>df['x1'][area])) & ((saccades_df['starty']<df['y0'][area]) | (saccades_df['starty']>df['y1'][area]))) & (((saccades_df['endx']>df['x0'][area]) & (saccades_df['endx']<=df['x1'][area])) & ((saccades_df['endy']>df['y0'][area]) & (saccades_df['endy']<=df['y1'][area])))]
-	   	AOI_SaccadesEntries['area'][area] = area
-	   	AOI_SaccadesEntries['trial'][area] =  trialnr
-	   	AOI_SaccadesEntries['latency'][area] =  Temp_sac_ent['starttime'].min()
-	   	AOI_SaccadesEntries['duration'][area] =  Temp_sac_ent['duration'].sum()
-	   	AOI_SaccadesEntries['frequency'][area] =  len(Temp_sac_ent['duration'])
+	   	try:            
+	   	    Points_star = p.contains_points(zip( saccades_df['startx'],  saccades_df['starty']))
+	   	    Points_star = np.invert(Points_star)
+	   	    Points_end = p.contains_points(zip( saccades_df['endx'],  saccades_df['endy']))
+	   	    Points = np.vstack((Points_star, Points_end)).T
+	   	    Entries = Points.all(axis=1)
+	   	    Temp_sac_ent = pd.DataFrame(saccades, columns=['starttime', 'endtime', 'duration', 'startx', 'starty', 'endx', 'endy'], index=Entries)
+	   	
+	   	    Temp_sac_ent = Temp_sac_ent.loc[True]
+	   	    AOI_SaccadesEntries['area'][area] = area
+	   	    AOI_SaccadesEntries['trial'][area] =  trialnr
+	   	    AOI_SaccadesEntries['latency'][area] =  Temp_sac_ent['starttime'].min()
+	   	    AOI_SaccadesEntries['duration'][area] =  Temp_sac_ent['duration'].sum()
+	   	    AOI_SaccadesEntries['frequency'][area] =  Temp_sac_ent['duration'].size
+	   	except:
+	   	    AOI_SaccadesEntries['area'][area] = area
+	   	    AOI_SaccadesEntries['trial'][area] =  trialnr
+	   	    AOI_SaccadesEntries['latency'][area] =  0
+	   	    AOI_SaccadesEntries['duration'][area] =  0
+	   	    AOI_SaccadesEntries['frequency'][area] =  0
+	   	
+	   	    print("Not entries found")
 	   	out.writerow([str(sys.argv[1]),imgname[trialnr], area, trialnr, AOI_Fixations['frequency'][area],AOI_Fixations['duration'][area], AOI_Fixations['starttime_mean'][area], AOI_SaccadesEntries['frequency'][area], AOI_SaccadesEntries['duration'][area], AOI_SaccadesEntries['latency'][area], AOI_DwellTime['frequency'][area]])
-	   	out.writerow([str(sys.argv[1]),imgname[trialnr], area, trialnr, AOI_Fixations['frequency'][area],AOI_Fixations['duration'][area], AOI_Fixations['starttime_mean'][area], AOI_SaccadesEntries['frequency'][area], AOI_SaccadesEntries['duration'][area], AOI_SaccadesEntries['latency'][area]])
 	   	print("Escrita area '%i'" % area)
         
 print('end')
