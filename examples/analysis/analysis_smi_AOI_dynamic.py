@@ -190,7 +190,7 @@ for trialnr in range(len(edfdata)):
 	   	AOI_SaccadesEntries['duration'][area] =  Temp_sac_ent['duration'].sum()
 	   	AOI_SaccadesEntries['frequency'][area] =  len(Temp_sac_ent['duration'])
 	   	out.writerow([str(sys.argv[1]),imgname[trialnr], area, trialnr, AOI_Fixations['frequency'][area],AOI_Fixations['duration'][area], AOI_Fixations['starttime_mean'][area], AOI_SaccadesEntries['frequency'][area], AOI_SaccadesEntries['duration'][area], AOI_SaccadesEntries['latency'][area], AOI_DwellTime['frequency'][area]])
-	   	out.writerow([str(sys.argv[1]),imgname[trialnr], area, trialnr, AOI_Fixations['frequency'][area],AOI_Fixations['duration'][area], AOI_Fixations['starttime_mean'][area], AOI_SaccadesEntries['frequency'][area], AOI_SaccadesEntries['duration'][area], AOI_SaccadesEntries['latency'][area]])
+	   	
 	   	print("Escrita area '%i'" % area)
         
 print('end')
