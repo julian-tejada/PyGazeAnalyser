@@ -44,3 +44,7 @@ should have received a copy of together with the software:
     along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 I hope PyGaze proves to be helpful to you!
+
+--------------------------------------------------------------------------
+
+This version was prepare to python 3
