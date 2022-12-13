@@ -35,6 +35,11 @@
 #
 # version 1 (10-Jan-2015)
 
+from six.moves import range
+# standard_library.install_aliases()
+from builtins import *
+from builtins import range
+# from past.utils import old_div
 __author__ = "Edwin Dalmaijer"
 
 
@@ -86,7 +91,7 @@ def read_idf(filename, start, stop=None, missing=0.0, debug=False):
 
 	# # # # #
 	# debug mode
-	
+
 	if debug:
 		def message(msg):
 			print(msg)
@@ -110,7 +115,7 @@ def read_idf(filename, start, stop=None, missing=0.0, debug=False):
 	# read file contents
 	message("reading file '%s'" % filename)
 	raw = f.readlines()
-	
+# 	print(raw)	
 	# close file
 	message("closing file '%s'" % filename)
 	f.close()
@@ -137,7 +142,7 @@ def read_idf(filename, start, stop=None, missing=0.0, debug=False):
 		
 		# string to list
 		line = raw[i].replace('\n','').replace('\r','').split('\t')
-		
+# 		print(line)		
 		# check if the line starts with '##' (denoting header)
 		if '##' in line[0]:
 			# skip processing
@@ -180,13 +185,15 @@ def read_idf(filename, start, stop=None, missing=0.0, debug=False):
 				if start in line or i == len(raw)-1:
 					started = True
 					trialend = True
+					print("Inicia trial")
 
 			# # # # #
 			# trial ending
-			
+		
 			if trialend:
 				message("trialend %d; %d samples found" % (len(data),len(x)))
 				# trial dict
+				
 				trial = {}
 				trial['x'] = numpy.array(x)
 				trial['y'] = numpy.array(y)
@@ -195,11 +202,13 @@ def read_idf(filename, start, stop=None, missing=0.0, debug=False):
 				trial['trackertime'] = numpy.array(trackertime)
 				trial['events'] = copy.deepcopy(events)
 				# events
+				print(numpy.array(x))
 				trial['events']['Sblk'], trial['events']['Eblk'] = blink_detection(trial['x'],trial['y'],trial['trackertime'],missing=missing, minlen=5) # TEJADA: decreased from 10 to 5
 				trial['events']['Sfix'], trial['events']['Efix'] = fixation_detection(trial['x'],trial['y'],trial['trackertime'],missing=missing,maxdist=80, mindur=80) # Parametros ajustados para BeGaze
 				trial['events']['Ssac'], trial['events']['Esac'] = saccade_detection(trial['x'],trial['y'],trial['trackertime'],missing=missing, minlen=1, maxvel=60, maxacc=450) #TEJADA: still trying to obtain the best adjust
 				# add trial to data
 				data.append(trial)
+				 
 				# reset stuff
 				x = []
 				y = []
@@ -218,6 +227,7 @@ def read_idf(filename, start, stop=None, missing=0.0, debug=False):
 					started = True
 					# find starting time
 					starttime = int(line[timei])
+					
 		
 		# # # # #
 		# parse line
@@ -230,45 +240,118 @@ def read_idf(filename, start, stop=None, missing=0.0, debug=False):
 				t = int(line[timei]) # time
 				m = line[msgi] # message
 				events['msg'].append([t,m])
-			
+				
+		
 			# regular lines will contain tab separated values, beginning with
 			# a timestamp, follwed by the values that were chosen to be
 			# extracted by the IDF converter
 			else:
+# 				print("Inicio linea com dados")	
 				# see if current line contains relevant data
 				try:
 					# extract data on POR and pupil size
-					for var in ['x', 'y', 'size']:
-						exec("vi = %si" % var)
-						exec("v = %s" % var)
-						# nothing
-						if vi['L'] == None and vi['R'] == None:
+# 					for var in ['x', 'y', 'size']:
+# 						
+# 						exec("vi = %si" % var)
+# 						exec("v = %s" % var)
+# 						
+# 						print(vi)
+# 						# nothing
+# 						if vi['L'] == None and vi['R'] == None:
+# 							val = 'not in IDF'
+# 						# only left eye
+# 						elif vi['L'] != None and vi['R'] == None:
+# 							val = float(line[vi['L']])
+# 						# only right eye
+# 						elif vi['L'] == None and vi['R'] != None:
+# 							val = float(line[vi['R']])
+# 						# average the two eyes, but only if they both
+# 						# contain valid data
+# 						elif vi['L'] != None and vi['R'] != None:
+# 							if float(line[vi['L']]) == 0:
+# 								val = float(line[vi['R']])
+# 							elif float(line[vi['R']]) == 0:
+# 								val = float(line[vi['L']])
+# 							else:
+# 								val = (float(line[vi['L']]) + float(line[vi['R']])) / 2.0
+# 						v.append(val)
+					# TEJADA: porting to python 3, eliminating exec functions, and dividing it in three steps. 	
+					vi = xi
+					v = x
+					if vi['L'] == None and vi['R'] == None:
 							val = 'not in IDF'
-						# only left eye
-						elif vi['L'] != None and vi['R'] == None:
-							val = float(line[vi['L']])
-						# only right eye
-						elif vi['L'] == None and vi['R'] != None:
+					# only left eye
+					elif vi['L'] != None and vi['R'] == None:
+						val = float(line[vi['L']])
+					# only right eye
+					elif vi['L'] == None and vi['R'] != None:
+						val = float(line[vi['R']])
+					# average the two eyes, but only if they both
+					# contain valid data
+					elif vi['L'] != None and vi['R'] != None:
+						if float(line[vi['L']]) == 0:
 							val = float(line[vi['R']])
-						# average the two eyes, but only if they both
-						# contain valid data
-						elif vi['L'] != None and vi['R'] != None:
-							if float(line[vi['L']]) == 0:
-								val = float(line[vi['R']])
-							elif float(line[vi['R']]) == 0:
-								val = float(line[vi['L']])
-							else:
-								val = (float(line[vi['L']]) + float(line[vi['R']])) / 2.0
-						v.append(val)
+						elif float(line[vi['R']]) == 0:
+							val = float(line[vi['L']])
+						else:
+							val = (float(line[vi['L']]) + float(line[vi['R']])) / 2.0
+					v.append(val)
+					
+					vi = yi
+					v = y
+					if vi['L'] == None and vi['R'] == None:
+							val = 'not in IDF'
+					# only left eye
+					elif vi['L'] != None and vi['R'] == None:
+						val = float(line[vi['L']])
+					# only right eye
+					elif vi['L'] == None and vi['R'] != None:
+						val = float(line[vi['R']])
+					# average the two eyes, but only if they both
+					# contain valid data
+					elif vi['L'] != None and vi['R'] != None:
+						if float(line[vi['L']]) == 0:
+							val = float(line[vi['R']])
+						elif float(line[vi['R']]) == 0:
+							val = float(line[vi['L']])
+						else:
+							val = (float(line[vi['L']]) + float(line[vi['R']])) / 2.0
+					v.append(val)
+					
+					
+					vi = sizei
+					v = size
+					if vi['L'] == None and vi['R'] == None:
+							val = 'not in IDF'
+					# only left eye
+					elif vi['L'] != None and vi['R'] == None:
+						val = float(line[vi['L']])
+					# only right eye
+					elif vi['L'] == None and vi['R'] != None:
+						val = float(line[vi['R']])
+					# average the two eyes, but only if they both
+					# contain valid data
+					elif vi['L'] != None and vi['R'] != None:
+						if float(line[vi['L']]) == 0:
+							val = float(line[vi['R']])
+						elif float(line[vi['R']]) == 0:
+							val = float(line[vi['L']])
+						else:
+							val = (float(line[vi['L']]) + float(line[vi['R']])) / 2.0
+					v.append(val)  
+					
+					
+					
+					print("Termina")
 					# extract time data
 					time.append((int(line[timei])-starttime))
 					# TEJADA: tracker time was divided by 1000 to adjust timestamp of SMI
-					trackertime.append((int(line[timei])-starttime)/1000)
+					trackertime.append(((int(line[timei])-starttime)/1000))
 				except:
 					message("line '%s' could not be parsed" % line)
 					continue # skip this line	
 	
 	# # # # #
 	# return
-	
+# 	print(data)
 	return data
