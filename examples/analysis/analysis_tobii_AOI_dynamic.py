@@ -101,7 +101,7 @@ print("loading behavioural data")
 #df = pd.read_csv(os.path.join(DATADIR, 'BC_Avila_6.aoi.txt'))	
 df = pd.read_csv(os.path.join(DATADIR, 'aoi.txt' ))	
 	# path
-fp = os.path.join(DATADIR, '%s.tsv' % ppname)
+fp = os.path.join(DATADIR, '%s_TOBII_output.tsv' % ppname)
 	
 	#fp = "/home/julan/ownCloud/FederalSergipe/Projetos/Konrad/PyGaze/data/Teste2.txt"
 	# open the file
