@@ -76,7 +76,7 @@ for ppname in PPS:
 	print("loading behavioural data")
 	
 	# path
-	fp = os.path.join(DATADIR, '%s.tsv' % ppname)
+	fp = os.path.join(DATADIR, '%s_TOBII_output.tsv' % ppname)
 	
 	#fp = "/home/julan/ownCloud/FederalSergipe/Projetos/Konrad/PyGaze/data/Teste2.txt"
 	# open the file
