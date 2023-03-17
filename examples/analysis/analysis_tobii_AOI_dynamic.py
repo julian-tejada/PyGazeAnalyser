@@ -135,10 +135,10 @@ print("plotting gaze data")
 
 out = csv.writer(open(os.path.join(DATADIR, '%s.aoi.analisis.txt' % ppname),"a"), delimiter=';', quoting=csv.QUOTE_ALL)
 out.writerow(["Sujeto","Imagen","Area","Ensayo","FF_AOI","DF_AOI","LF_AOI","FE_AOI0","DE_AOI0","LE_AOI0", "Dwell_AOI"])
-AOI_Fixations = pd.DataFrame(np.zeros(((len(edfdata)), 5)), columns=['area','trial', 'starttime_mean','duration','frequency'])
-AOI_DwellTime = pd.DataFrame(np.zeros(((len(edfdata)), 3)), columns=['area','trial','frequency'])
-AOI_Fixations = pd.DataFrame(np.zeros(((len(edfdata)), 5)), columns=['area','trial', 'starttime_mean','duration','frequency'])
-AOI_SaccadesEntries = pd.DataFrame(np.zeros(((len(edfdata)), 5)), columns=['area','trial','latency','frequency', 'duration'])
+AOI_Fixations = pd.DataFrame(np.zeros(((len(df)), 5)), columns=['area','trial', 'starttime_mean','duration','frequency'])
+AOI_DwellTime = pd.DataFrame(np.zeros(((len(df)), 3)), columns=['area','trial','frequency'])
+AOI_Fixations = pd.DataFrame(np.zeros(((len(df)), 5)), columns=['area','trial', 'starttime_mean','duration','frequency'])
+AOI_SaccadesEntries = pd.DataFrame(np.zeros(((len(df)), 5)), columns=['area','trial','latency','frequency', 'duration'])
 # dataframe of pupil diameter
 out2 = csv.writer(open(os.path.join(DATADIR, '%s.aoi.pupil.txt' % ppname),"a"), delimiter=';', quoting=csv.QUOTE_ALL)
 	# loop through trials
