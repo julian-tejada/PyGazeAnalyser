@@ -35,10 +35,20 @@
 #
 # version 1 (01-Jul-2014)
 
+from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import unicode_literals
+from future import standard_library
+from six.moves import range
+standard_library.install_aliases()
+from builtins import *
+from builtins import range
+from past.utils import old_div
 __author__ = "Edwin Dalmaijer"
 
 import numpy
-
+from scipy.spatial import distance
 
 def blink_detection(x, y, time, missing=0.0, minlen=10):
 	
@@ -190,11 +200,13 @@ def saccade_detection(x, y, time, missing=0.0, minlen=5, maxvel=40, maxacc=340):
 	# CONTAINERS
 	Ssac = []
 	Esac = []
+# 	print(x)
 
 	# INTER-SAMPLE MEASURES
 	# the distance between samples is the square root of the sum
 	# of the squared horizontal and vertical interdistances
 	intdist = (numpy.diff(x)**2 + numpy.diff(y)**2)**0.5
+    # intdist = distance.euclidean(x,y)
 	# get inter-sample times
 	inttime = numpy.diff(time)
 	# recalculate inter-sample times to seconds
@@ -203,7 +215,7 @@ def saccade_detection(x, y, time, missing=0.0, minlen=5, maxvel=40, maxacc=340):
 	# VELOCITY AND ACCELERATION
 	# the velocity between samples is the inter-sample distance
 	# divided by the inter-sample time
-	vel = intdist / inttime
+	vel = (intdist/inttime)
 	# the acceleration is the sample-to-sample difference in
 	# eye movement velocity
 	acc = numpy.diff(vel)
