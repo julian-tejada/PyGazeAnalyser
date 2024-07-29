@@ -26,17 +26,6 @@
 #
 # version 2 (02 Jul 2014)
 
-# from __future__ import print_function
-# from __future__ import division
-# from __future__ import absolute_import
-# from __future__ import unicode_literals
-# from future import standard_library
-from six.moves import range
-# standard_library.install_aliases()
-from builtins import *
-from builtins import str
-from builtins import range
-# from past.utils import old_div
 __author__ = "Edwin Dalmaijer"
 
 # native
@@ -207,19 +196,17 @@ def draw_heatmap(fixations, dispsize, imagefile=None, durationweight=True, alpha
 	# HEATMAP
 	# Gaussian
 	gwh = 200
-	# gsdwh = old_div(gwh,6)
-	gsdwh = gwh // 6
+	gsdwh = gwh/6
 	gaus = gaussian(gwh,gsdwh)
 	# matrix of zeroes
-	# strt = old_div(gwh,2)
-	strt = gwh // 2
-	heatmapsize = dispsize[1] + 2*strt, dispsize[0] + 2*strt
+	strt = gwh/2
+	heatmapsize = int(dispsize[1] + 2*strt), int(dispsize[0] + 2*strt)
 	heatmap = numpy.zeros(heatmapsize, dtype=float)
 	# create heatmap
 	for i in range(0,len(fix['dur'])):
 		# get x and y coordinates
-		x = strt + fix['x'][i] - int(gwh // 2)
-		y = strt + fix['y'][i] - int(gwh // 2)
+		x = strt + fix['x'][i] - int(gwh/2)
+		y = strt + fix['y'][i] - int(gwh/2)
 		# correct Gaussian size if either coordinate falls outside of
 		# display boundaries
 		if (not 0 < x < dispsize[0]) or (not 0 < y < dispsize[1]):
@@ -241,17 +228,18 @@ def draw_heatmap(fixations, dispsize, imagefile=None, durationweight=True, alpha
 				# fixation was probably outside of display
 				pass
 		else:				
-			# add Gaussian to the current heatmap
+			#add Gaussian to the current heatmap
 			#Convert x and y coodernates into integers (Julian Tejada)
 			x = int(x)
 			y = int(y)
+			
 			heatmap[y:y+gwh,x:x+gwh] += gaus * fix['dur'][i]
 			
 	# resize heatmap
-	heatmap = heatmap[strt:dispsize[1]+strt,strt:dispsize[0]+strt]
+	heatmap = heatmap[int(strt):dispsize[1]+int(strt),int(strt):dispsize[0]+int(strt)]
 	# remove zeros
 	lowbound = numpy.mean(heatmap[heatmap>0])
-	heatmap[heatmap<lowbound] = numpy.NaN
+	heatmap[heatmap<lowbound] = numpy.nan
 	# draw heatmap on top of image
 	ax.imshow(heatmap, cmap='jet', alpha=alpha)
 
@@ -455,14 +443,18 @@ def draw_display(dispsize, imagefile=None):
 		# width and height of the image
 		w, h = len(img[0]), len(img)
 		# x and y position of the image on the display
-		x = (dispsize[0]//2) - (w//2)
-		y = (dispsize[1]//2) - (h//2)
+		x = int(dispsize[0]/2 - w/2)
+		y = int(dispsize[1]/2 - h/2)
 		# draw the image on the screen
-		screen[y:y+h,x:x+w,:] += img
+		# screen[y:y+h,x:x+w,0] += img
+		# screen[y:y+h,x:x+w,1] += img
+		# screen[y:y+h,x:x+w,2] += img
+		# change 2024
+		screen += img
 	# dots per inch
 	dpi = 100.0
 	# determine the figure size in inches
-	figsize = ((dispsize[0]//dpi), (dispsize[1]//dpi))
+	figsize = (dispsize[0]/dpi, dispsize[1]/dpi)
 	# create a figure
 	fig = pyplot.figure(figsize=figsize, dpi=dpi, frameon=False)
 	ax = pyplot.Axes(fig, [0,0,1,1])
@@ -495,14 +487,14 @@ def gaussian(x, sx, y=None, sy=None):
 	if sy == None:
 		sy = sx
 	# centers	
-	xo = (x/2)
-	yo = (y/2)
+	xo = x/2
+	yo = y/2
 	# matrix of zeros
 	M = numpy.zeros([y,x],dtype=float)
 	# gaussian matrix
 	for i in range(x):
 		for j in range(y):
-			M[j,i] = numpy.exp(-1.0 * ((((float(i)-xo)**2/(2*sx*sx))) + (((float(j)-yo)**2/(2*sy*sy))) ) )
+			M[j,i] = numpy.exp(-1.0 * (((float(i)-xo)**2/(2*sx*sx)) + ((float(j)-yo)**2/(2*sy*sy)) ) )
 
 	return M
 
