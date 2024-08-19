@@ -372,9 +372,9 @@ def draw_scanpath(fixations, saccades, dispsize, imagefile=None, alpha=0.5, save
 		# loop through all saccades
 		for st, et, dur, sx, sy, ex, ey in saccades:
 			#TEJADA: jump (maybe) blinks (0,0)
-			if sx==0 and sy==0:
+			if sx<=0 and sy<=0:
 				continue
-			if ex==0 and ey==0:
+			if ex<=0 and ey<=0:
 				continue            
 			# draw an arrow between every saccade start and ending
 			sx = int(sx)
